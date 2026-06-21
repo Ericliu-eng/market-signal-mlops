@@ -1,0 +1,6 @@
+event_ts,symbol,open,high,low,close,volume,source,snapshot_id,ingested_at
+2026-01-01,AAPL,100,105,99,104,1000000,alpha_vantage,snapshot_001,2026-01-01T23:00:00Z
+2026-01-02,AAPL,104,106,101,102,1200000,alpha_vantage,snapshot_001,2026-01-02T23:00:00Z
+2026-01-03,AAPL,102,108,101,107,1300000,alpha_vantage,snapshot_001,2026-01-03T23:00:00Z
+2026-01-04,MSFT,200,205,198,203,900000,alpha_vantage,snapshot_001,2026-01-04T23:00:00Z
+2026-01-05,MSFT,203,207,201,206,950000,alpha_vantage,snapshot_001,2026-01-05T23:00:00Z

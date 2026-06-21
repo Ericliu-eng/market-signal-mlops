@@ -1,0 +1,22 @@
+[project]
+name = "market-signal-mlops"
+version = "0.1.0"
+description = "Production-style financial MLOps platform for market signal modeling."
+requires-python = ">=3.11"
+dependencies = [
+    "pandas>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "ruff>=0.6.0",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"

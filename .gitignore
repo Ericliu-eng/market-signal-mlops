@@ -2,10 +2,8 @@
 __pycache__/
 *.py[codz]
 *$py.class
-
 # C extensions
 *.so
-
 # Distribution / packaging
 .Python
 build/
@@ -216,3 +214,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+
+#---------------- python⬆
+plan2.pdf
+plan2.docx
+.docx-review/
