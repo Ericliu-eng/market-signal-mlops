@@ -15,4 +15,8 @@ MARKET_BAR_REQUIRED_COLUMNS = [
 
 PRICE_COLUMNS = ["open", "high", "low", "close"]
 
+DATETIME_COLUMNS = ["event_ts", "ingested_at"]
+
+STRING_COLUMNS = ["symbol", "source", "snapshot_id"]
+
 PRIMARY_KEY_COLUMNS = ["event_ts", "symbol"]
