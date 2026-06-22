@@ -23,12 +23,15 @@ This project expects a versioned market bar snapshot exported from Project 1.
 
 - All required columns must exist.
 - Required columns cannot contain null values.
+- `event_ts` and `ingested_at` must use datetime-compatible dtypes.
+- `symbol`, `source`, and `snapshot_id` must contain non-blank strings.
 - The primary key is `event_ts + symbol`.
 - Duplicate primary keys are not allowed.
-- `open`, `high`, `low`, and `close` must be positive.
-- `volume` must be non-negative.
-- Data should be ordered by `symbol` and `event_ts`.
-
+- `open`, `high`, `low`, and `close` must be finite numeric values greater than zero.
+- `volume` must be a non-negative integer.
+- `high` must be greater than or equal to `open`, `low`, and `close`.
+- `low` must be less than or equal to `open`, `high`, and `close`.
+- Rows must be ordered by `symbol` and `event_ts`.
 ## Project Boundary
 
 Project 2 does not import Project 1 Python modules.  
