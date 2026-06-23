@@ -36,3 +36,27 @@ This project expects a versioned market bar snapshot exported from Project 1.
 
 Project 2 does not import Project 1 Python modules.  
 Project 1 provides data through an exported snapshot or stable database view.
+
+## FeatureSnapshot contract
+
+Feature snapshots represent model-ready features generated from validated market bar data.
+
+Required columns:
+
+- `event_ts`
+- `symbol`
+- `snapshot_id`
+- `feature_set_version`
+- `generated_at`
+
+Validation rules:
+
+- All required columns must exist.
+- Required columns cannot contain null values.
+- `event_ts` and `generated_at` must use datetime-compatible dtypes.
+- `symbol`, `snapshot_id`, and `feature_set_version` must contain non-blank strings.
+- The primary key is `event_ts + symbol + snapshot_id + feature_set_version`.
+- Duplicate primary keys are not allowed.
+- Rows must be ordered by `symbol` and `event_ts`.
+- At least one dynamic feature column must exist.
+- Dynamic feature columns must contain finite numeric values.
