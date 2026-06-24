@@ -220,3 +220,7 @@ __marimo__/
 plan2.pdf
 plan2.docx
 .review/
+
+src/market_signal_mlops.egg-info/
+__pycache__/
+.pytest_cache/

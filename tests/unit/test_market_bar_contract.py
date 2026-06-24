@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import pytest
-import numpy as np
 
 from market_signal_mlops.validation.market_bars import validate_market_bars
 
@@ -13,7 +13,6 @@ FIXTURE_PATH = Path("data/fixtures/market_bars_sample.csv")
 
 
 def load_fixture() -> pd.DataFrame:
-
     return pd.read_csv(FIXTURE_PATH, parse_dates=["event_ts", "ingested_at"])
 
 
@@ -62,7 +61,6 @@ def test_null_required_value_fails() -> None:
         validate_market_bars(df)
 
 
-# 会失败的乱序测试
 def test_out_of_order_event_ts_fails() -> None:
     df = load_fixture()
 
@@ -75,11 +73,11 @@ def test_out_of_order_event_ts_fails() -> None:
         validate_market_bars(out_of_order)
 
 
-# 测试 event_ts 和 ingested_at 这两列必须是 datetime 类型
 @pytest.mark.parametrize("column", ["event_ts", "ingested_at"])
 def test_datetime_column_requires_datetime_dtype(column: str) -> None:
     df = load_fixture()
     df[column] = "123"
+
     with pytest.raises(ValueError, match=f"{column} must be datetime"):
         validate_market_bars(df)
 
@@ -88,6 +86,7 @@ def test_datetime_column_requires_datetime_dtype(column: str) -> None:
 def test_string_column_requires_string_values(column: str) -> None:
     df = load_fixture()
     df[column] = 123
+
     with pytest.raises(ValueError, match=f"{column} must be string"):
         validate_market_bars(df)
 
@@ -96,6 +95,7 @@ def test_string_column_requires_string_values(column: str) -> None:
 def test_string_column_rejects_blank_values(column: str) -> None:
     df = load_fixture()
     df[column] = ""
+
     with pytest.raises(ValueError, match=f"{column} must be not null"):
         validate_market_bars(df)
 
@@ -104,6 +104,7 @@ def test_string_column_rejects_blank_values(column: str) -> None:
 def test_price_column_requires_numeric_dtype(column: str) -> None:
     df = load_fixture()
     df[column] = "hello word"
+
     with pytest.raises(ValueError, match=f"{column} must be number"):
         validate_market_bars(df)
 
