@@ -26,7 +26,7 @@ def build_basic_feature_snapshot(
     validate_market_bars(market_bars)
 
     if generated_at is None:
-        generated_at = pd.Timestamp.utcnow()
+        generated_at = pd.Timestamp.now(tz="UTC")
     else:
         generated_at = pd.Timestamp(generated_at)
 
@@ -73,7 +73,7 @@ def build_basic_feature_snapshot(
 
 
 def main() -> None:
-    fixture_path = Path("data/fixtures/market_bars_sample.csv")
+    fixture_path = Path("data/fixtures/market_bars.csv")
     market_bars = pd.read_csv(
         fixture_path,
         parse_dates=["event_ts", "ingested_at"],
@@ -81,7 +81,7 @@ def main() -> None:
     feature_snapshot = build_basic_feature_snapshot(
         market_bars,
         feature_set_version=DEFAULT_FEATURE_SET_VERSION,
-        generated_at="2026-01-06T00:00:00Z",
+        generated_at=pd.Timestamp.now(tz="UTC"),
     )
 
     print(feature_snapshot.to_string(index=False))
