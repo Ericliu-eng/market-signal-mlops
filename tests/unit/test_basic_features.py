@@ -9,7 +9,7 @@ from market_signal_mlops.features import build_basic_feature_snapshot
 from market_signal_mlops.validation.feature_snapshots import validate_feature_snapshot
 
 
-FIXTURE_PATH = Path("data/fixtures/market_bars_sample.csv")
+FIXTURE_PATH = Path("data/fixtures/market_bars.csv")
 GENERATED_AT = pd.Timestamp("2026-01-06T00:00:00Z")
 
 
@@ -68,7 +68,11 @@ def test_future_row_change_does_not_change_past_feature_row() -> None:
     )
 
     changed_future = market_bars.copy()
-    changed_future.loc[2, "close"] = 106
+    future_row_index = 2
+    changed_future.loc[future_row_index, "close"] = (
+        changed_future.loc[future_row_index, "low"]
+        + changed_future.loc[future_row_index, "high"]
+    ) / 2
     changed_features = build_basic_feature_snapshot(
         changed_future,
         feature_set_version="basic_v1",
