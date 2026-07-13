@@ -103,7 +103,6 @@ def build_feature_snapshot(
     feature_snapshot= copy[output_columns].dropna().reset_index(drop=True)
     # TODO: validate_feature_snapshot(feature_snapshot)
     validate_feature_snapshot(feature_snapshot)
-
     return  feature_snapshot
 
 
@@ -117,5 +116,6 @@ def main():
         feature_set_version=DEFAULT_FEATURE_SET_VERSION,
         generated_at=None,
     )
+
 if __name__ == "__main__":
     main()
