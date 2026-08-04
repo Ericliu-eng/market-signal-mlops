@@ -1,7 +1,9 @@
 from __future__ import annotations
 
-import pandas as pd
 from pathlib import Path
+
+import pandas as pd
+
 from market_signal_mlops.validation.feature_snapshots import validate_feature_snapshot
 from market_signal_mlops.validation.market_bars import validate_market_bars
 
