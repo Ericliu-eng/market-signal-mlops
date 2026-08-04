@@ -8,3 +8,7 @@ test:
 
 lint:
 	$(PY) -m ruff check src tests
+
+build:
+	$(PY) -m market_signal_mlops.features.feature_builder
+

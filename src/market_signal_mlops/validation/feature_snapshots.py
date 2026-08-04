@@ -10,7 +10,7 @@ from market_signal_mlops.contracts.schemas import (
     FEATURE_SNAPSHOT_STRING_COLUMNS,
 )
 
-
+# This Python  is used to validate whether the input feature columns are valid.
 def validate_feature_snapshot(df: pd.DataFrame) -> None:
     missing_columns = [
         column for column in FEATURE_SNAPSHOT_REQUIRED_COLUMNS if column not in df.columns

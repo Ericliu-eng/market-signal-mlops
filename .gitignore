@@ -224,3 +224,8 @@ plan2.docx
 src/market_signal_mlops.egg-info/
 __pycache__/
 .pytest_cache/
+
+
+# Local-only files
+.vscode/
+pd_feature.csv
