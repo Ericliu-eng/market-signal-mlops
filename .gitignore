@@ -229,3 +229,7 @@ __pycache__/
 # Local-only files
 .vscode/
 pd_feature.csv
+
+# Local generated outputs
+artifacts/
+project-structure.txt
