@@ -27,31 +27,32 @@ between data engineering and MLOps explicit.
 Project 1 curated market bars
         |
         v
-Versioned CSV/Parquet snapshot or stable database view
+Versioned CSV/Parquet snapshot or stable database view       [implemented]
         |
         v
-MarketBarInput contract validation
+MarketBarInput contract validation                           [implemented]
         |
         v
-Point-in-time feature generation
+Point-in-time feature and label generation                   [implemented]
         |
         v
-FeatureSnapshot contract validation
+FeatureSnapshot contract validation                          [implemented]
         |
         v
-Walk-forward training and baseline comparison
+Expanding-window evaluation and baseline comparison          [implemented]
         |
         v
-MLflow experiment tracking and model registry
+MLflow experiment tracking and challenger model              [Week 4]
         |
         v
-Promotion gate, batch inference, API, and monitoring
+Model registry, promotion, inference, API, and monitoring    [planned]
 ```
 
 ## Current Repository State
 
-Week 1 focuses on the first stable slice: repository structure, data contracts,
-fixtures, validators, tests, and CI.
+Weeks 1-3 are complete. The current stable slice covers repository and contract
+boundaries, point-in-time feature and label generation, and leakage-safe
+walk-forward baseline evaluation.
 
 Implemented now:
 
@@ -62,7 +63,18 @@ Implemented now:
   input contract.
 - `src/market_signal_mlops/validation/feature_snapshots.py` validates the
   feature snapshot contract.
-- `tests/unit/` covers valid fixtures and contract failure modes.
+- `src/market_signal_mlops/features/` builds deterministic point-in-time
+  features plus next-day volatility and direction labels.
+- `src/market_signal_mlops/evaluation/time_series.py` creates chronological
+  expanding-window folds without sharing timestamps between train and
+  validation windows.
+- `src/market_signal_mlops/evaluation/evaluator.py` compares a naive prior with
+  logistic regression using preprocessing fitted independently within each
+  fold.
+- `src/market_signal_mlops/evaluation/reporting.py` writes fold metrics,
+  aggregate metrics, predictions, and auditable fold boundaries.
+- `tests/unit/` covers contracts, deterministic features, leakage behavior,
+  labels, time splitting, and evaluation.
 - `.github/workflows/ci.yml` runs Ruff and unit tests on push and pull request.
 
 ## Data Contracts
@@ -102,23 +114,22 @@ features, non-finite feature values, and unstable row ordering.
 ## Intentionally Not Implemented Yet
 
 These components are part of the full 8-week roadmap, but they are not part of
-the current Week 1 slice:
+the completed Week 1-3 slice:
 
-- point-in-time feature builder
-- label builder
-- walk-forward splitter
-- model training
 - MLflow tracking server
+- tree-based challenger model
 - model registry and promotion gate
 - batch inference job
 - PostgreSQL prediction store
 - FastAPI service
 - drift and performance monitoring
 
-## Week 1 Completion Gate
+## Week 3 Completion Gate
 
-Week 1 is complete when a fresh environment can install the project, run unit
-tests, run lint checks, and validate the fixed fixture without needing Project 1.
+Week 3 is complete when a fresh environment can install the project, pass unit
+tests and lint checks, and reproduce the expanding-window baseline evaluation
+without needing Project 1. Every fold must keep training timestamps strictly
+before validation timestamps, and the report must preserve fold boundaries.
 
 Expected commands:
 
@@ -126,4 +137,5 @@ Expected commands:
 python -m pip install -e ".[dev]"
 python -m pytest tests/unit -v
 python -m ruff check src tests
+python -m market_signal_mlops.evaluation.run
 ```
