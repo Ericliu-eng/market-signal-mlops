@@ -10,9 +10,11 @@ Create or activate a Python 3.11+ environment, then run:
 python -m pip install -e ".[dev]"
 python -m pytest tests/unit -v
 python -m ruff check src tests
+python -m market_signal_mlops.evaluation.run
 ```
 
-The current Week 1 gate is green when unit tests pass and Ruff reports no issues.
+Weeks 1-3 are complete when unit tests and Ruff pass and the evaluation command
+reproduces the walk-forward baseline reports in `artifacts/evaluations/run-001/`.
 
 ## MVP Scope
 
@@ -35,17 +37,32 @@ This project does not implement:
 - Spark
 - complex frontend UI
 
-## Current Week 1 Evidence
+## Current Status: Week 3 Complete
 
-This repository currently proves the Project 1 to Project 2 boundary with a
-small, local fixture and contract validators that can run without Project 1.
+The repository now implements the first three roadmap stages: reproducible data
+contracts, point-in-time features and labels, and leakage-safe walk-forward
+baseline evaluation. Week 4 will add MLflow experiment tracking and one
+challenger model.
 
 - Fixed fixture: `data/fixtures/market_bars_sample.csv`
+- Evaluation fixture: `data/fixtures/market_bars.csv`
 - Market bar contract: `src/market_signal_mlops/validation/market_bars.py`
 - Feature snapshot contract: `src/market_signal_mlops/validation/feature_snapshots.py`
 - Contract constants: `src/market_signal_mlops/contracts/schemas.py`
+- Point-in-time features: `src/market_signal_mlops/features/`
+- Expanding-window evaluation: `src/market_signal_mlops/evaluation/`
+- Baselines: naive prior and logistic regression
+- Evaluation outputs: fold metrics, aggregate metrics, predictions, and fold boundaries
 - Unit tests: `tests/unit/`
 - CI workflow: `.github/workflows/ci.yml`
+
+## Not Implemented Yet
+
+- MLflow experiment tracking and challenger-model runs
+- model registry, promotion gate, and rollback
+- batch inference and prediction storage
+- FastAPI service
+- drift, performance monitoring, and retraining recommendations
 
 ## Project Boundary
 
