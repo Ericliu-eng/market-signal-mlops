@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+
 import numpy as np
 import pandas as pd
 from sklearn.dummy import DummyClassifier
@@ -16,6 +17,7 @@ from sklearn.metrics import (
 )
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import HistGradientBoostingClassifier
 
 from market_signal_mlops.evaluation.time_series import ExpandingWindowSplitter
 
@@ -146,7 +148,22 @@ class TimeSeriesEvaluator:
                     ("model", LogisticRegression(max_iter=1_000, random_state=42)),
                 ]
             ),
-        }
+            "hist_gradient_boosting": Pipeline([
+            ("imputer", SimpleImputer(strategy="median")),
+            (
+                "model",
+                HistGradientBoostingClassifier(
+                    learning_rate=0.05,
+                    max_iter=100,
+                    max_leaf_nodes=7,
+                    min_samples_leaf=2,
+                    l2_regularization=0.1,
+                    random_state=42,
+                ),
+            ),
+        ]
+    ),
+            }
 
     def _evaluate_fold(
         self,

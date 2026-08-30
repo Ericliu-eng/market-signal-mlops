@@ -52,11 +52,12 @@ def test_evaluator_returns_one_result_per_model_per_fold(
 ) -> None:
     result = TimeSeriesEvaluator(evaluation_config).evaluate(*modeling_inputs)
 
-    expected_rows = 2 * evaluation_config.n_splits
+    expected_rows = 3 * evaluation_config.n_splits
     assert len(result.fold_metrics) == expected_rows
     assert set(result.fold_metrics["model_name"]) == {
         "naive_prior",
         "logistic_regression",
+        "hist_gradient_boosting",
     }
     pairs = result.predictions[["fold_number", "model_name"]].drop_duplicates()
     assert len(pairs) == expected_rows
