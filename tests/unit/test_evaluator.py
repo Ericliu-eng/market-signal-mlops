@@ -99,3 +99,19 @@ def test_evaluator_rejects_missing_target(
             feature_snapshot,
             labels_without_target,
         )
+
+def test_fit_candidate_model_returns_fitted_model(
+    evaluation_config: EvaluationConfig,
+    modeling_inputs: tuple[pd.DataFrame, pd.DataFrame],
+) -> None:
+    evaluator = TimeSeriesEvaluator(evaluation_config)
+
+    model, training_features = evaluator.fit_candidate_model(
+        "hist_gradient_boosting",
+        *modeling_inputs,
+    )
+
+    predictions = model.predict(training_features)
+
+    assert len(predictions) == len(training_features)
+    assert set(predictions).issubset({0, 1})

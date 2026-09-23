@@ -1,9 +1,10 @@
+import subprocess
 from pathlib import Path
 
-import pandas as pd
 import mlflow
-import subprocess
-
+import mlflow.sklearn
+import pandas as pd
+from mlflow.models import infer_signature
 
 from market_signal_mlops.evaluation.evaluator import (
     EvaluationConfig,
@@ -14,10 +15,13 @@ from market_signal_mlops.features.feature_builder import build_feature_snapshot
 from market_signal_mlops.features.labels import build_next_day_direction_labels
 
 
-def main() -> None:
+EXPERIMENT_NAME = "market-signal-next-day-direction-v2"
+CHALLENGER_MODEL_NAME = "hist_gradient_boosting"
+OUTPUT_DIR = Path("artifacts/evaluations/run-001")
 
-    
-    mlflow.set_experiment("market-signal-next-day-direction-v2")
+
+def main() -> None:
+    mlflow.set_experiment(EXPERIMENT_NAME)
 
     bars = pd.read_csv(
         "data/fixtures/market_bars.csv",
@@ -36,19 +40,24 @@ def main() -> None:
         )
     )
 
-    with mlflow.start_run(run_name="walk-forward-evaluation"):
-        mlflow.set_tags(
-    {
-        "run_type": "walk_forward_evaluation",
-        "snapshot_id": str(features["snapshot_id"].iloc[0]),
-        "feature_set_version": str(
-            features["feature_set_version"].iloc[0]),
-        "git_sha": subprocess.check_output(
+    git_sha = subprocess.check_output(
         ["git", "rev-parse", "HEAD"],
         text=True,
-    ).strip(),    
+    ).strip()
 
-        })
+    with mlflow.start_run(run_name="walk-forward-evaluation"):
+        mlflow.set_tags(
+            {
+                "run_type": "walk_forward_evaluation",
+                "challenger_model": CHALLENGER_MODEL_NAME,
+                "snapshot_id": str(features["snapshot_id"].iloc[0]),
+                "feature_set_version": str(
+                    features["feature_set_version"].iloc[0]
+                ),
+                "git_sha": git_sha,
+            }
+        )
+
         mlflow.log_params(
             {
                 "target_column": evaluator.config.target_column,
@@ -56,14 +65,11 @@ def main() -> None:
                 "validation_size": evaluator.config.validation_size,
                 "n_splits": evaluator.config.n_splits,
             }
-        )        
+        )
 
         result = evaluator.evaluate(features, labels)
+        write_evaluation_report(result, OUTPUT_DIR)
 
-        write_evaluation_report(
-            result,
-            Path("artifacts/evaluations/run-001"),
-        )
         for record in result.aggregate_metrics.to_dict(orient="records"):
             model_name = record.pop("model_name")
             mlflow.log_metrics(
@@ -71,8 +77,30 @@ def main() -> None:
                     f"{model_name}_{metric_name}": float(metric_value)
                     for metric_name, metric_value in record.items()
                 }
-            )        
-        mlflow.log_artifacts("artifacts/evaluations/run-001")
+            )
+
+        mlflow.log_artifacts(str(OUTPUT_DIR))
+
+        challenger_model, training_features = evaluator.fit_candidate_model(
+            CHALLENGER_MODEL_NAME,
+            features,
+            labels,
+        )
+
+        input_example = training_features.head(5)
+        signature = infer_signature(
+            input_example,
+            challenger_model.predict(input_example),
+        )
+
+        mlflow.sklearn.log_model(
+            sk_model=challenger_model,
+            name="challenger_model",
+            input_example=input_example,
+            signature=signature,
+            skops_trusted_types=["numpy.dtype"],
+        )
+
 
 if __name__ == "__main__":
     main()

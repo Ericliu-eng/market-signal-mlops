@@ -13,7 +13,7 @@ python -m ruff check src tests
 python -m market_signal_mlops.evaluation.run
 ```
 
-Weeks 1-3 are complete when unit tests and Ruff pass and the evaluation command
+Weeks 1-4 are complete when unit tests and Ruff pass and the evaluation command
 reproduces the walk-forward baseline reports in `artifacts/evaluations/run-001/`.
 
 ## MVP Scope
@@ -37,12 +37,11 @@ This project does not implement:
 - Spark
 - complex frontend UI
 
-## Current Status: Week 3 Complete
+## Current Status: Week 4 Complete
 
-The repository now implements the first three roadmap stages: reproducible data
-contracts, point-in-time features and labels, and leakage-safe walk-forward
-baseline evaluation. Week 4 will add MLflow experiment tracking and one
-challenger model.
+The repository now implements the first four roadmap stages: reproducible data
+contracts, point-in-time features and labels, leakage-safe walk-forward
+evaluation, and MLflow experiment tracking with a fitted challenger model.
 
 - Fixed fixture: `data/fixtures/market_bars_sample.csv`
 - Evaluation fixture: `data/fixtures/market_bars.csv`
@@ -55,10 +54,13 @@ challenger model.
 - Evaluation outputs: fold metrics, aggregate metrics, predictions, and fold boundaries
 - Unit tests: `tests/unit/`
 - CI workflow: `.github/workflows/ci.yml`
+- MLflow tracking server with PostgreSQL backend
+- Challenger: histogram gradient boosting classifier
+- Logged model signature, input example, and dependency environment
+- Experiment convention: `docs/EXPERIMENT_CONVENTION.md`
 
 ## Not Implemented Yet
 
-- MLflow experiment tracking and challenger-model runs
 - model registry, promotion gate, and rollback
 - batch inference and prediction storage
 - FastAPI service

@@ -270,3 +270,30 @@ class TimeSeriesEvaluator:
         aggregate.columns = [f"{metric}_{stat}" for metric, stat in aggregate.columns]
         aggregate["fold_count"] = fold_metrics.groupby("model_name").size()
         return aggregate.reset_index()
+
+
+    def fit_candidate_model(
+        self,
+        model_name: str,
+        feature_snapshot: pd.DataFrame,
+        labels: pd.DataFrame,
+    ) -> tuple[Any, pd.DataFrame]:
+        """Fit one candidate on all currently labeled historical data."""
+
+        frame = self._prepare_modeling_frame(feature_snapshot, labels)
+        feature_columns = self._feature_columns(frame)
+        models = self._candidate_models()
+
+        if model_name not in models:
+            raise ValueError(f"Unknown candidate model: {model_name}")
+
+        training_features = frame[feature_columns]
+        training_target = frame[self.config.target_column]
+
+        if training_target.nunique() < 2:
+            raise ValueError("Training target must contain at least two classes")
+
+        model = models[model_name]
+        model.fit(training_features, training_target)
+
+        return model, training_features
