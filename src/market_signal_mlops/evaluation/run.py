@@ -14,7 +14,13 @@ from market_signal_mlops.evaluation.reporting import write_evaluation_report
 from market_signal_mlops.features.feature_builder import build_feature_snapshot
 from market_signal_mlops.features.labels import build_next_day_direction_labels
 
+from market_signal_mlops.registry.policy import (
+    CandidateEvidence,
+    PromotionPolicy,
+)
+from market_signal_mlops.registry.service import RegistryService
 
+REGISTERED_MODEL_NAME = "market-signal-classifier"
 EXPERIMENT_NAME = "market-signal-next-day-direction-v2"
 CHALLENGER_MODEL_NAME = "hist_gradient_boosting"
 OUTPUT_DIR = Path("artifacts/evaluations/run-001")
@@ -45,15 +51,13 @@ def main() -> None:
         text=True,
     ).strip()
 
-    with mlflow.start_run(run_name="walk-forward-evaluation"):
+    with mlflow.start_run(run_name="walk-forward-evaluation") as run:
         mlflow.set_tags(
             {
                 "run_type": "walk_forward_evaluation",
                 "challenger_model": CHALLENGER_MODEL_NAME,
                 "snapshot_id": str(features["snapshot_id"].iloc[0]),
-                "feature_set_version": str(
-                    features["feature_set_version"].iloc[0]
-                ),
+                "feature_set_version": str(features["feature_set_version"].iloc[0]),
                 "git_sha": git_sha,
             }
         )
@@ -93,12 +97,57 @@ def main() -> None:
             challenger_model.predict(input_example),
         )
 
-        mlflow.sklearn.log_model(
+        model_info = mlflow.sklearn.log_model(
             sk_model=challenger_model,
             name="challenger_model",
             input_example=input_example,
             signature=signature,
             skops_trusted_types=["numpy.dtype"],
+        )
+
+        challenger_metrics = result.aggregate_metrics.loc[
+            result.aggregate_metrics["model_name"] == CHALLENGER_MODEL_NAME
+        ].iloc[0]
+
+        evidence = CandidateEvidence(
+            balanced_accuracy_mean=float(challenger_metrics["balanced_accuracy_mean"]),
+            balanced_accuracy_std=float(challenger_metrics["balanced_accuracy_std"]),
+            roc_auc_mean=float(challenger_metrics["roc_auc_mean"]),
+            brier_score_mean=float(challenger_metrics["brier_score_mean"]),
+            data_contract_passed=True,
+            signature_present=signature is not None,
+        )
+
+        decision = PromotionPolicy().evaluate(evidence)
+
+        registry = RegistryService(REGISTERED_MODEL_NAME)
+        candidate = registry.register_candidate(
+            model_uri=model_info.model_uri,
+            run_id=run.info.run_id,
+        )
+
+        if decision.approved:
+            registry.promote_candidate(
+                version=candidate.version,
+                decision=decision,
+            )
+
+        mlflow.set_tags(
+            {
+                "promotion_gate_approved": str(decision.approved).lower(),
+                "registered_model_name": candidate.name,
+                "registered_model_version": candidate.version,
+            }
+        )
+
+        mlflow.log_dict(
+            {
+                "approved": decision.approved,
+                "reasons": list(decision.reasons),
+                "registered_model_name": candidate.name,
+                "registered_model_version": candidate.version,
+            },
+            "promotion_decision.json",
         )
 
 
