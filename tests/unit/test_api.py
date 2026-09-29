@@ -5,6 +5,9 @@ from market_signal_mlops.api.app import create_app
 from datetime import date, datetime, timezone
 
 from market_signal_mlops.inference.schemas import PredictionRecord
+import pandas as pd
+
+from market_signal_mlops.monitoring.service import MonitoringReport
 
 
 from dataclasses import dataclass
@@ -156,11 +159,30 @@ class FakeMonitoringRepository:
         ]
 
 
+class FakeMonitoringReportRepository:
+    def get_latest_report(self) -> MonitoringReport:
+        return MonitoringReport(
+            observed_at=pd.Timestamp("2026-06-18T10:00:00Z"),
+            latest_event_ts=pd.Timestamp("2026-06-18T04:00:00Z"),
+            freshness_hours=6.0,
+            missing_rate=0.0,
+            feature_psi={
+                "return_1d": 0.53,
+                "volume_change_1d": 0.12,
+            },
+            maximum_feature_psi=0.53,
+            status="critical",
+            recommendation="recommend_retrain",
+            reasons=("feature drift exceeds critical threshold",),
+        )
+
+
 def test_monitoring_summary_endpoint() -> None:
     client = TestClient(
         create_app(
             prediction_repository=FakeMonitoringRepository(),
             model_registry=FakeModelRegistry(),
+            monitoring_repository=FakeMonitoringReportRepository(),
         )
     )
 
@@ -173,4 +195,16 @@ def test_monitoring_summary_endpoint() -> None:
         "symbols": ["AAPL", "MSFT"],
         "model_versions": ["1"],
         "feature_versions": ["pit_features_v1"],
+        "observed_at": "2026-06-18T10:00:00Z",
+        "latest_event_ts": "2026-06-18T04:00:00Z",
+        "freshness_hours": 6.0,
+        "missing_rate": 0.0,
+        "feature_psi": {
+            "return_1d": 0.53,
+            "volume_change_1d": 0.12,
+        },
+        "maximum_feature_psi": 0.53,
+        "status": "critical",
+        "recommendation": "recommend_retrain",
+        "reasons": ["feature drift exceeds critical threshold"],
     }
