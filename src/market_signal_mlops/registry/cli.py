@@ -8,9 +8,7 @@ DEFAULT_MODEL_NAME = "market-signal-classifier"
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        description="Manage Market Signal model aliases."
-    )
+    parser = argparse.ArgumentParser(description="Manage Market Signal model aliases.")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     rollback_parser = subparsers.add_parser(

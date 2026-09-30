@@ -29,9 +29,7 @@ def test_upsert_is_idempotent() -> None:
 
     prediction = make_prediction()
     repository.upsert_predictions([prediction])
-    repository.upsert_predictions(
-        [replace(prediction, probability=0.91)]
-    )
+    repository.upsert_predictions([replace(prediction, probability=0.91)])
 
     stored = repository.list_predictions()
 

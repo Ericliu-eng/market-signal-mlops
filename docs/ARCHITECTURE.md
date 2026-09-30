@@ -1,141 +1,276 @@
 # Architecture
 
-Market Signal MLOps is a production-style financial ML platform. The MVP is
-organized around a clean boundary between the upstream market data project and
-this model platform.
+Market Signal MLOps is a production-style platform for next-trading-day market-direction modeling. It separates data ingestion, model development, model governance, inference, serving, and monitoring.
 
-## System Boundary
+## System boundary
 
-Project 1 owns market data collection, cleaning, and snapshot export. Project 2
-owns contract validation, point-in-time feature generation, model training,
-model registration, batch inference, and monitoring.
+The upstream data-engineering project owns:
 
-Project 2 must not import Project 1 internal Python modules. The only supported
-inputs are:
+- source ingestion
+- cleaning and normalization
+- curated market-bar storage
+- CSV, Parquet, or stable database-view exports
 
-- exported CSV snapshots
-- exported Parquet snapshots
-- stable database views
-- documented data contracts
+This repository owns:
 
-This keeps the model platform independently testable and makes the handoff
-between data engineering and MLOps explicit.
+- input contract validation
+- point-in-time feature and label generation
+- leakage-safe evaluation
+- experiment tracking
+- model registration and promotion
+- batch inference
+- prediction persistence
+- API serving
+- operational monitoring
 
-## Current MVP Flow
+The MLOps project does not import upstream internal Python modules. The boundary is a documented data contract.
+
+## End-to-end flow
 
 ```text
-Project 1 curated market bars
-        |
-        v
-Versioned CSV/Parquet snapshot or stable database view       [implemented]
-        |
-        v
-MarketBarInput contract validation                           [implemented]
-        |
-        v
-Point-in-time feature and label generation                   [implemented]
-        |
-        v
-FeatureSnapshot contract validation                          [implemented]
-        |
-        v
-Expanding-window evaluation and baseline comparison          [implemented]
-        |
-        v
-MLflow experiment tracking and challenger model              [Week 4]
-        |
-        v
-Model registry, promotion, inference, API, and monitoring    [planned]
+External market sources
+          |
+          v
+Upstream lakehouse pipeline
+          |
+          v
+Versioned market-bar snapshot
+          |
+          v
+Market-bar contract validation
+          |
+          v
+Point-in-time feature generation
+          |
+          +----------------------+
+          |                      |
+          v                      v
+Next-day labels          Batch inference inputs
+          |                      |
+          v                      |
+Walk-forward evaluation          |
+          |                      |
+          v                      |
+MLflow experiment tracking       |
+          |                      |
+          v                      |
+Controlled model promotion       |
+          |                      |
+          +---- champion alias ---+
+                                 |
+                                 v
+                         Versioned predictions
+                                 |
+                                 v
+                         PostgreSQL storage
+                                 |
+                    +------------+------------+
+                    |                         |
+                    v                         v
+               FastAPI service         Monitoring pipeline
+                                              |
+                                              v
+                           freshness / missingness / PSI /
+                              delayed-label performance
 ```
 
-## Current Repository State
+## Major components
 
-Weeks 1-3 are complete. The current stable slice covers repository and contract
-boundaries, point-in-time feature and label generation, and leakage-safe
-walk-forward baseline evaluation.
+| Component | Responsibility |
+|---|---|
+| `contracts` | Required columns, identifiers, and primary keys |
+| `validation` | Market-bar and feature-snapshot contract checks |
+| `features` | Deterministic point-in-time features and labels |
+| `evaluation` | Expanding-window evaluation and model comparison |
+| `registry` | Promotion policy, model aliases, and rollback |
+| `inference` | Champion loading and batch prediction generation |
+| `storage` | Prediction and monitoring persistence |
+| `monitoring` | Freshness, quality, drift, performance, and decisions |
+| `orchestration` | Dagster inference and monitoring jobs |
+| `api` | Health, model, prediction, and monitoring endpoints |
 
-Implemented now:
+## Data contracts
 
-- `data/fixtures/market_bars_sample.csv` provides a fixed market bar fixture.
-- `src/market_signal_mlops/contracts/schemas.py` defines required columns and
-  primary keys for market bars and feature snapshots.
-- `src/market_signal_mlops/validation/market_bars.py` validates the market bar
-  input contract.
-- `src/market_signal_mlops/validation/feature_snapshots.py` validates the
-  feature snapshot contract.
-- `src/market_signal_mlops/features/` builds deterministic point-in-time
-  features plus next-day volatility and direction labels.
-- `src/market_signal_mlops/evaluation/time_series.py` creates chronological
-  expanding-window folds without sharing timestamps between train and
-  validation windows.
-- `src/market_signal_mlops/evaluation/evaluator.py` compares a naive prior with
-  logistic regression using preprocessing fitted independently within each
-  fold.
-- `src/market_signal_mlops/evaluation/reporting.py` writes fold metrics,
-  aggregate metrics, predictions, and auditable fold boundaries.
-- `tests/unit/` covers contracts, deterministic features, leakage behavior,
-  labels, time splitting, and evaluation.
-- `.github/workflows/ci.yml` runs Ruff and unit tests on push and pull request.
+### Market bars
 
-## Data Contracts
-
-### MarketBarInput
-
-Market bars are the external input from Project 1. They must include stable
-timestamps, symbols, OHLCV values, source metadata, a snapshot identifier, and
-an ingestion timestamp.
-
-Primary key:
+Required identity:
 
 ```text
 event_ts + symbol
 ```
 
-Validation protects against missing columns, null required values, duplicate
-keys, invalid datatypes, invalid OHLC relationships, non-finite prices, negative
-volumes, and unstable row ordering.
+The contract validates:
 
-### FeatureSnapshot
+- required columns
+- null values
+- duplicate keys
+- datetime and string types
+- finite OHLC values
+- valid high/low relationships
+- non-negative volume
+- deterministic ordering
 
-Feature snapshots are model-ready feature rows generated from validated market
-bars. They include metadata that makes each row traceable to a data snapshot and
-feature set version.
+### Feature snapshots
 
-Primary key:
+Required identity:
 
 ```text
 event_ts + symbol + snapshot_id + feature_set_version
 ```
 
-Validation protects against missing metadata, duplicate keys, invalid
-timestamps, blank string identifiers, missing feature columns, non-numeric
-features, non-finite feature values, and unstable row ordering.
+Feature snapshots include source and generation metadata so predictions remain traceable to their input data and feature implementation.
 
-## Intentionally Not Implemented Yet
+## Leakage controls
 
-These components are part of the full 8-week roadmap, but they are not part of
-the completed Week 1-3 slice:
+The system protects against temporal leakage by:
 
-- MLflow tracking server
-- tree-based challenger model
-- model registry and promotion gate
-- batch inference job
-- PostgreSQL prediction store
-- FastAPI service
-- drift and performance monitoring
+- sorting observations chronologically
+- generating features only from current and previous observations
+- generating next-day labels separately
+- joining features and labels through stable identifiers
+- using expanding-window validation
+- requiring every training timestamp to precede validation timestamps
+- fitting preprocessing independently inside each fold
 
-## Week 3 Completion Gate
+Random train/test splitting is intentionally avoided.
 
-Week 3 is complete when a fresh environment can install the project, pass unit
-tests and lint checks, and reproduce the expanding-window baseline evaluation
-without needing Project 1. Every fold must keep training timestamps strictly
-before validation timestamps, and the report must preserve fold boundaries.
+## Model lifecycle
 
-Expected commands:
+Candidate models are evaluated against naïve and logistic-regression baselines. MLflow records:
 
-```powershell
-python -m pip install -e ".[dev]"
-python -m pytest tests/unit -v
-python -m ruff check src tests
-python -m market_signal_mlops.evaluation.run
+- parameters
+- fold and aggregate metrics
+- Git commit
+- snapshot identifier
+- feature-set version
+- model signature
+- input example
+- dependency environment
+- evaluation artifacts
+
+Promotion is controlled by an explicit policy. A failed candidate does not change the existing champion.
+
+Aliases:
+
+```text
+candidate
+champion
 ```
+
+Rollback moves the champion alias to a known-good earlier version without rebuilding the artifact.
+
+## Inference architecture
+
+Batch inference resolves:
+
+```text
+models:/market-signal-classifier@champion
+```
+
+It generates one latest prediction per eligible symbol and stores:
+
+- prediction date
+- symbol
+- predicted class
+- positive-class probability
+- model name and version
+- feature-set version
+- snapshot identifier
+- generation timestamp
+
+The database key makes repeated execution idempotent for the same prediction identity.
+
+## Monitoring architecture
+
+Monitoring separates evidence from decisions.
+
+Evidence includes:
+
+- data freshness in hours
+- feature missing rate
+- per-feature PSI
+- maximum PSI
+- rolling balanced accuracy
+- rolling F1
+- rolling ROC-AUC
+- rolling Brier score
+
+Decision states:
+
+```text
+healthy
+warning
+critical
+```
+
+Recommendations:
+
+```text
+no_action
+investigate
+recommend_retrain
+```
+
+Data-quality failures take priority over retraining. Critical drift can recommend retraining, but no monitoring path automatically promotes a model.
+
+## Runtime topology
+
+Docker Compose provides:
+
+```text
+localhost:5000  -> MLflow
+localhost:5432  -> MLflow PostgreSQL
+localhost:5433  -> Prediction PostgreSQL
+```
+
+The FastAPI service runs locally on:
+
+```text
+localhost:8000
+```
+
+Named Docker volumes preserve:
+
+- MLflow backend data
+- MLflow artifacts
+- prediction and monitoring data
+
+## API surface
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /health` | Service health |
+| `GET /model` | Current champion metadata |
+| `GET /predictions` | Versioned prediction retrieval |
+| `GET /monitoring-summary` | Prediction inventory and latest monitoring evidence |
+| `GET /docs` | OpenAPI interface |
+
+## CI quality gates
+
+Pull requests targeting `main` run on Python 3.11 and 3.12 and must pass:
+
+- Ruff lint
+- Ruff formatting verification
+- the complete pytest suite
+
+Concurrency cancellation prevents obsolete runs from consuming CI resources after a newer commit is pushed.
+
+## Safety properties
+
+- Invalid input data fails before modeling.
+- Non-finite features fail validation.
+- Training and validation windows cannot overlap.
+- Failed candidates cannot replace the champion.
+- Repeated inference does not duplicate predictions.
+- Drift does not automatically trigger promotion.
+- Stale data prioritizes investigation over retraining.
+- The system does not execute trades.
+
+## Current limitations
+
+- Data ingestion is external to this repository.
+- The system operates as batch inference, not streaming inference.
+- The model is not validated for live trading profitability.
+- Market costs, slippage, liquidity, and impact are not modeled.
+- Daily-bar timestamp conventions require careful freshness interpretation.
+- High availability, Kubernetes deployment, and automated order execution are outside the MVP.

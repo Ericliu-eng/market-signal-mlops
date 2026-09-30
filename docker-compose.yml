@@ -14,6 +14,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
   prediction-db:
     image: postgres:16-alpine
     environment:
@@ -32,8 +33,11 @@ services:
         ]
       interval: 5s
       timeout: 5s
-      retries: 10  
+      retries: 10
+
   mlflow:
+    environment:
+      MLFLOW_SERVER_ALLOWED_HOSTS: "mlflow:5000,localhost:*,127.0.0.1:*"
     image: python:3.11-slim
     command: >
       sh -c "pip install --no-cache-dir mlflow==3.15.2 psycopg2-binary &&
@@ -51,7 +55,22 @@ services:
       postgres:
         condition: service_healthy
 
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      PREDICTION_DATABASE_URL: postgresql+psycopg://market_signal:market_signal@prediction-db:5432/market_signal
+    ports:
+      - "8000:8000"
+    depends_on:
+      prediction-db:
+        condition: service_healthy
+      mlflow:
+        condition: service_started
+
 volumes:
   postgres_data:
   mlflow_artifacts:
-  prediction_data:  
+  prediction_data:

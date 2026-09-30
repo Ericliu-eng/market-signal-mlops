@@ -51,9 +51,9 @@ def build_basic_feature_snapshot(
     features["return_1d"] = grouped["close"].pct_change()
     features["volume_change_1d"] = grouped["volume"].pct_change()
     features["intraday_return"] = (features["close"] / features["open"]) - 1
-    features["high_low_range"] = (
-        (features["high"] - features["low"]) / features["close"]
-    )
+    features["high_low_range"] = (features["high"] - features["low"]) / features[
+        "close"
+    ]
 
     output_columns = [
         "event_ts",

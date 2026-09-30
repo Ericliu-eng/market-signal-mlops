@@ -43,7 +43,7 @@ def build_feature_snapshot(
             "volume",
         ]
     ].copy()
-    
+
     grouped = copy.groupby("symbol")
     # TODO: compute return features
     # - return_1d
@@ -54,15 +54,21 @@ def build_feature_snapshot(
     # TODO: compute trend features
     # - close_to_ma_5d
     # - close_to_ma_10d
-    copy["ma_5d"] = grouped["close"].transform(lambda x: x.rolling(window=5, min_periods=5).mean())
+    copy["ma_5d"] = grouped["close"].transform(
+        lambda x: x.rolling(window=5, min_periods=5).mean()
+    )
     copy["close_to_ma_5d"] = copy["close"] / copy["ma_5d"]
 
-    copy["ma_10d"] = grouped["close"].transform(lambda x: x.rolling(window=10, min_periods=10).mean())
+    copy["ma_10d"] = grouped["close"].transform(
+        lambda x: x.rolling(window=10, min_periods=10).mean()
+    )
     copy["close_to_ma_10d"] = copy["close"] / copy["ma_10d"]
     # TODO: compute risk features
     # - rolling_volatility_5d
     # - high_low_range
-    copy["rolling_volatility_5d"] = grouped["return_1d"].transform(lambda x: x.rolling(window=5, min_periods=5).std())
+    copy["rolling_volatility_5d"] = grouped["return_1d"].transform(
+        lambda x: x.rolling(window=5, min_periods=5).std()
+    )
     copy["high_low_range"] = copy["high"] - copy["low"]
 
     # TODO: compute volume features
@@ -77,10 +83,7 @@ def build_feature_snapshot(
         lambda x: x.rolling(window=5, min_periods=5).std()
     )
 
-    copy["volume_zscore_5d"] = (
-        (copy["volume"] - rolling_mean) / rolling_std
-    )
-
+    copy["volume_zscore_5d"] = (copy["volume"] - rolling_mean) / rolling_std
 
     copy["feature_set_version"] = feature_set_version
     copy["generated_at"] = generated_at
@@ -102,10 +105,10 @@ def build_feature_snapshot(
         "volume_zscore_5d",
     ]
     # TODO: drop rows with missing feature values caused by insufficient history
-    feature_snapshot= copy[output_columns].dropna().reset_index(drop=True)
+    feature_snapshot = copy[output_columns].dropna().reset_index(drop=True)
     # TODO: validate_feature_snapshot(feature_snapshot)
     validate_feature_snapshot(feature_snapshot)
-    return  feature_snapshot
+    return feature_snapshot
 
 
 def main():
@@ -118,6 +121,7 @@ def main():
         feature_set_version=DEFAULT_FEATURE_SET_VERSION,
         generated_at=None,
     )
+
 
 if __name__ == "__main__":
     main()

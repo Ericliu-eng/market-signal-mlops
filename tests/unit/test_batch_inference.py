@@ -74,10 +74,7 @@ def test_build_prediction_records_uses_latest_row_per_symbol() -> None:
 
     assert len(records) == 2
     assert [record.symbol for record in records] == ["AAPL", "MSFT"]
-    assert all(
-        record.as_of_date.isoformat() == "2026-09-24"
-        for record in records
-    )
+    assert all(record.as_of_date.isoformat() == "2026-09-24" for record in records)
     assert records[0].prediction == 1
     assert records[0].probability == pytest.approx(0.80)
     assert records[1].prediction == 0

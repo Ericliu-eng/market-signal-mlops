@@ -30,9 +30,7 @@ def test_calculate_model_performance() -> None:
 def test_unavailable_labels_are_excluded() -> None:
     frame = pd.DataFrame(
         {
-            "as_of_date": pd.to_datetime(
-                ["2026-06-01", "2026-06-02", "2026-06-03"]
-            ),
+            "as_of_date": pd.to_datetime(["2026-06-01", "2026-06-02", "2026-06-03"]),
             "actual": [1, None, 0],
             "prediction": [1, 0, 0],
             "probability": [0.8, 0.4, 0.2],

@@ -67,9 +67,7 @@ class PredictionRepository:
         statement = select(PredictionRow)
 
         if as_of_date is not None:
-            statement = statement.where(
-                PredictionRow.as_of_date == as_of_date
-            )
+            statement = statement.where(PredictionRow.as_of_date == as_of_date)
         if symbol is not None:
             statement = statement.where(PredictionRow.symbol == symbol)
 

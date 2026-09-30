@@ -73,9 +73,7 @@ class MonitoringRepository:
 
     def get_latest_report(self) -> MonitoringReport | None:
         statement = (
-            select(MonitoringRow)
-            .order_by(MonitoringRow.observed_at.desc())
-            .limit(1)
+            select(MonitoringRow).order_by(MonitoringRow.observed_at.desc()).limit(1)
         )
 
         with Session(self.engine) as session:
@@ -90,8 +88,7 @@ class MonitoringRepository:
                 freshness_hours=row.freshness_hours,
                 missing_rate=row.missing_rate,
                 feature_psi={
-                    str(name): float(value)
-                    for name, value in row.feature_psi.items()
+                    str(name): float(value) for name, value in row.feature_psi.items()
                 },
                 maximum_feature_psi=row.maximum_feature_psi,
                 status=row.status,
