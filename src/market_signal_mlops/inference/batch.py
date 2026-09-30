@@ -26,8 +26,7 @@ def build_prediction_records(
     missing_columns = REQUIRED_METADATA_COLUMNS - set(feature_snapshot.columns)
     if missing_columns:
         raise ValueError(
-            f"feature snapshot missing required columns: "
-            f"{sorted(missing_columns)}"
+            f"feature snapshot missing required columns: {sorted(missing_columns)}"
         )
 
     if feature_snapshot.empty:
@@ -51,14 +50,10 @@ def build_prediction_records(
 
     feature_columns = [str(column) for column in feature_names]
     missing_features = [
-        column
-        for column in feature_columns
-        if column not in latest_features.columns
+        column for column in feature_columns if column not in latest_features.columns
     ]
     if missing_features:
-        raise ValueError(
-            f"feature snapshot missing model inputs: {missing_features}"
-        )
+        raise ValueError(f"feature snapshot missing model inputs: {missing_features}")
 
     model_inputs = latest_features[feature_columns]
     predictions = np.asarray(model.predict(model_inputs))
@@ -78,9 +73,7 @@ def build_prediction_records(
                 as_of_date=event_ts.date(),
                 symbol=str(row["symbol"]),
                 prediction=int(predictions[row_number]),
-                probability=float(
-                    probabilities[row_number, positive_class_index]
-                ),
+                probability=float(probabilities[row_number, positive_class_index]),
                 model_name=model_name,
                 model_version=model_version,
                 feature_version=str(row["feature_set_version"]),

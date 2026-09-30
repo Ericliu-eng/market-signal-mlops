@@ -25,7 +25,6 @@ def test_expanding_window_keeps_training_before_validation() -> None:
         assert timestamps[max(train_indices)] < timestamps[min(validation_indices)]
 
 
-
 def test_training_window_expands_for_each_fold() -> None:
     timestamps = pd.date_range("2026-01-01", periods=12, freq="D")
 
@@ -52,7 +51,6 @@ def test_splitter_rejects_insufficient_timestamps() -> None:
 
     with pytest.raises(ValueError, match="Not enough timestamps"):
         list(splitter.split(timestamps))
-
 
 
 def test_same_timestamp_never_appears_in_both_windows() -> None:

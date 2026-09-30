@@ -69,9 +69,7 @@ def calculate_model_performance(
 
     return ModelPerformance(
         sample_count=len(labeled),
-        balanced_accuracy=float(
-            balanced_accuracy_score(actual, prediction)
-        ),
+        balanced_accuracy=float(balanced_accuracy_score(actual, prediction)),
         f1=float(f1_score(actual, prediction, zero_division=0)),
         brier_score=float(brier_score_loss(actual, probability)),
         roc_auc=roc_auc,

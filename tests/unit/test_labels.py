@@ -1,10 +1,10 @@
-
 import pandas as pd
 import pytest
 from market_signal_mlops.features.labels import (
     build_next_day_direction_labels,
     build_next_day_volatility_labels,
 )
+
 
 def make_market_bars() -> pd.DataFrame:
     return pd.DataFrame(
@@ -48,11 +48,12 @@ def make_market_bars() -> pd.DataFrame:
         ]
     )
 
+
 def test_next_day_volatility_labels_are_shifted_forward() -> None:
     market_bars = make_market_bars()
 
     labels = build_next_day_volatility_labels(market_bars)
-    #next_return = (next_day  close / today_close) - 1 
+    # next_return = (next_day  close / today_close) - 1
     first_label = labels.loc[
         labels["event_ts"] == pd.Timestamp("2026-01-01", tz="UTC"),
         "target_next_day_abs_return",
@@ -60,18 +61,19 @@ def test_next_day_volatility_labels_are_shifted_forward() -> None:
 
     assert first_label == pytest.approx(0.10)
 
+
 def test_last_row_per_symbol_has_no_next_day_label() -> None:
     market_bars = make_market_bars()
 
     labels = build_next_day_volatility_labels(market_bars)
     assert pd.Timestamp("2026-01-03", tz="UTC") not in set(labels["event_ts"])
 
-def test_direction_labels_are_binary() -> None :
+
+def test_direction_labels_are_binary() -> None:
     bar = make_market_bars()
     direct_label = build_next_day_direction_labels(bar)
-    
-    assert direct_label["target_next_day_direction"].isin([0, 1]).all()
 
+    assert direct_label["target_next_day_direction"].isin([0, 1]).all()
 
 
 def test_label_builder_does_not_mutate_input() -> None:

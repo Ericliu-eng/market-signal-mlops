@@ -70,8 +70,7 @@ def test_each_fold_is_strictly_chronological(
     result = TimeSeriesEvaluator(evaluation_config).evaluate(*modeling_inputs)
 
     assert (
-        result.fold_boundaries["train_end"]
-        < result.fold_boundaries["validation_start"]
+        result.fold_boundaries["train_end"] < result.fold_boundaries["validation_start"]
     ).all()
 
 
@@ -99,6 +98,7 @@ def test_evaluator_rejects_missing_target(
             feature_snapshot,
             labels_without_target,
         )
+
 
 def test_fit_candidate_model_returns_fitted_model(
     evaluation_config: EvaluationConfig,

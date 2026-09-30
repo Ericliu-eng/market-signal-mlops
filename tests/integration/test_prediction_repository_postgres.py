@@ -51,9 +51,7 @@ def test_postgres_upsert_is_idempotent() -> None:
 
     try:
         repository.upsert_predictions([prediction])
-        repository.upsert_predictions(
-            [replace(prediction, probability=0.91)]
-        )
+        repository.upsert_predictions([replace(prediction, probability=0.91)])
 
         stored = repository.list_predictions(
             as_of_date=TEST_DATE,

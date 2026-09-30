@@ -18,8 +18,7 @@ REGISTERED_MODEL_NAME = "market-signal-classifier"
 MODEL_ALIAS = "champion"
 DEFAULT_TRACKING_URI = "http://localhost:5000"
 DEFAULT_DATABASE_URL = (
-    "postgresql+psycopg://market_signal:market_signal"
-    "@localhost:5433/market_signal"
+    "postgresql+psycopg://market_signal:market_signal@localhost:5433/market_signal"
 )
 DEFAULT_MARKET_BARS_PATH = Path("data/fixtures/market_bars.csv")
 

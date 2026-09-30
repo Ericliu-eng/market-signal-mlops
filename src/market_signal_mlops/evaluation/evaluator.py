@@ -23,7 +23,11 @@ from market_signal_mlops.evaluation.time_series import ExpandingWindowSplitter
 
 
 IDENTIFIER_COLUMNS = {
-    "event_ts", "symbol", "snapshot_id", "feature_set_version", "generated_at"
+    "event_ts",
+    "symbol",
+    "snapshot_id",
+    "feature_set_version",
+    "generated_at",
 }
 JOIN_COLUMNS = ["event_ts", "symbol", "snapshot_id"]
 
@@ -103,12 +107,17 @@ class TimeSeriesEvaluator:
     def _prepare_modeling_frame(
         self, feature_snapshot: pd.DataFrame, labels: pd.DataFrame
     ) -> pd.DataFrame:
-        for name, dataframe in (("feature_snapshot", feature_snapshot), ("labels", labels)):
+        for name, dataframe in (
+            ("feature_snapshot", feature_snapshot),
+            ("labels", labels),
+        ):
             missing = [column for column in JOIN_COLUMNS if column not in dataframe]
             if missing:
                 raise ValueError(f"{name} missing required columns: {missing}")
         if self.config.target_column not in labels:
-            raise ValueError(f"labels missing target column: {self.config.target_column}")
+            raise ValueError(
+                f"labels missing target column: {self.config.target_column}"
+            )
 
         frame = feature_snapshot.merge(
             labels[JOIN_COLUMNS + [self.config.target_column]],
@@ -119,7 +128,9 @@ class TimeSeriesEvaluator:
         if frame.empty:
             raise ValueError("No rows remain after joining features and labels")
         if frame[self.config.target_column].isna().any():
-            raise ValueError(f"Target column contains missing values: {self.config.target_column}")
+            raise ValueError(
+                f"Target column contains missing values: {self.config.target_column}"
+            )
         return frame.sort_values(["event_ts", "symbol"], kind="stable").reset_index(
             drop=True
         )
@@ -148,22 +159,23 @@ class TimeSeriesEvaluator:
                     ("model", LogisticRegression(max_iter=1_000, random_state=42)),
                 ]
             ),
-            "hist_gradient_boosting": Pipeline([
-            ("imputer", SimpleImputer(strategy="median")),
-            (
-                "model",
-                HistGradientBoostingClassifier(
-                    learning_rate=0.05,
-                    max_iter=100,
-                    max_leaf_nodes=7,
-                    min_samples_leaf=2,
-                    l2_regularization=0.1,
-                    random_state=42,
-                ),
+            "hist_gradient_boosting": Pipeline(
+                [
+                    ("imputer", SimpleImputer(strategy="median")),
+                    (
+                        "model",
+                        HistGradientBoostingClassifier(
+                            learning_rate=0.05,
+                            max_iter=100,
+                            max_leaf_nodes=7,
+                            min_samples_leaf=2,
+                            l2_regularization=0.1,
+                            random_state=42,
+                        ),
+                    ),
+                ]
             ),
-        ]
-    ),
-            }
+        }
 
     def _evaluate_fold(
         self,
@@ -192,7 +204,9 @@ class TimeSeriesEvaluator:
         prediction_frames: list[pd.DataFrame] = []
         for model_name, model in self._candidate_models().items():
             model.fit(x_train, y_train)
-            predictions = pd.Series(model.predict(x_validation), index=validation_frame.index)
+            predictions = pd.Series(
+                model.predict(x_validation), index=validation_frame.index
+            )
             probabilities = model.predict_proba(x_validation)
             positive_index = list(model.classes_).index(self.config.positive_label)
             positive_probability = pd.Series(
@@ -266,11 +280,12 @@ class TimeSeriesEvaluator:
 
     def _aggregate_metrics(self, fold_metrics: pd.DataFrame) -> pd.DataFrame:
         metric_columns = ["balanced_accuracy", "f1", "roc_auc", "brier_score"]
-        aggregate = fold_metrics.groupby("model_name")[metric_columns].agg(["mean", "std"])
+        aggregate = fold_metrics.groupby("model_name")[metric_columns].agg(
+            ["mean", "std"]
+        )
         aggregate.columns = [f"{metric}_{stat}" for metric, stat in aggregate.columns]
         aggregate["fold_count"] = fold_metrics.groupby("model_name").size()
         return aggregate.reset_index()
-
 
     def fit_candidate_model(
         self,

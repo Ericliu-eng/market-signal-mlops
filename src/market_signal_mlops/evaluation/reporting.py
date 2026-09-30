@@ -29,4 +29,3 @@ def write_evaluation_report(
         output_dir / "fold_boundaries.csv",
         index=False,
     )
-

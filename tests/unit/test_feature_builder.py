@@ -10,6 +10,7 @@ from market_signal_mlops.validation.feature_snapshots import validate_feature_sn
 
 GENERATED_AT = pd.Timestamp("2026-01-06T00:00:00Z")
 
+
 def make_market_bars(row_count: int = 12) -> pd.DataFrame:
     rows = []
 
@@ -34,11 +35,16 @@ def make_market_bars(row_count: int = 12) -> pd.DataFrame:
 
     return pd.DataFrame(rows)
 
+
 def test_feature_snapshot_passes_contract() -> None:
     # TODO: load fixture
-    market_bars  = make_market_bars()
+    market_bars = make_market_bars()
     # TODO: build feature snapshot
-    features_snapshot = build_feature_snapshot(market_bars,feature_set_version="pit_features_v1",generated_at=GENERATED_AT,)
+    features_snapshot = build_feature_snapshot(
+        market_bars,
+        feature_set_version="pit_features_v1",
+        generated_at=GENERATED_AT,
+    )
     # TODO: validate expected columns / contract
     validate_feature_snapshot(features_snapshot)
 
@@ -73,6 +79,7 @@ def test_feature_builder_does_not_mutate_input() -> None:
     )
 
     pd.testing.assert_frame_equal(market_bars, original)
+
 
 def test_adding_future_row_does_not_change_existing_features() -> None:
     # TODO:
@@ -109,7 +116,6 @@ def test_adding_future_row_does_not_change_existing_features() -> None:
     ].reset_index(drop=True)
 
     pd.testing.assert_frame_equal(original_features, comparable_expanded)
-
 
 
 def test_changing_future_row_does_not_change_past_features() -> None:

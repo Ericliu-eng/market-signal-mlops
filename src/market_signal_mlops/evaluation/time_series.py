@@ -44,9 +44,7 @@ class ExpandingWindowSplitter:
             )
 
         for fold_number in range(self.n_splits):
-            train_end = self.min_train_size + (
-                fold_number * self.validation_size
-            )
+            train_end = self.min_train_size + (fold_number * self.validation_size)
             validation_end = train_end + self.validation_size
 
             train_timestamps = unique_timestamps[:train_end]

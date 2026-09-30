@@ -32,8 +32,7 @@ def build_next_day_volatility_labels(
 
     # TODO: sort by symbol/event_ts
     bars = (
-        market_bars
-        .copy()
+        market_bars.copy()
         .sort_values(
             ["symbol", "event_ts"],
             ascending=[True, True],
@@ -42,20 +41,12 @@ def build_next_day_volatility_labels(
     )
 
     # TODO: compute next_day_return
-        # 3. Get the next day's closing price within each symbol
-    bars["next_day_close"] = (
-        bars
-        .groupby("symbol")["close"]
-        .shift(-1)
-    )
+    # 3. Get the next day's closing price within each symbol
+    bars["next_day_close"] = bars.groupby("symbol")["close"].shift(-1)
     # TODO: compute target_next_day_abs_return
-    bars["next_day_return"] = (
-        bars["next_day_close"] / bars["close"] - 1
-    )
-    bars["target_next_day_abs_return"] = (
-        bars["next_day_return"].abs()
-    )    
-    
+    bars["next_day_return"] = bars["next_day_close"] / bars["close"] - 1
+    bars["target_next_day_abs_return"] = bars["next_day_return"].abs()
+
     # TODO: select output columns
     labels = bars[
         [
@@ -66,9 +57,7 @@ def build_next_day_volatility_labels(
         ]
     ].copy()
     # 7. Last date for each symbol has no next-day value
-    labels = labels.dropna(
-        subset=["target_next_day_abs_return"]
-    )
+    labels = labels.dropna(subset=["target_next_day_abs_return"])
 
     return labels.reset_index(drop=True)
 
@@ -92,9 +81,7 @@ def build_next_day_direction_labels(
     labels["next_day_return"] = (labels["next_close"] / labels["close"]) - 1
 
     labels = labels.dropna(subset=["next_day_return"]).reset_index(drop=True)
-    labels["target_next_day_direction"] = (
-        labels["next_day_return"] > 0
-    ).astype(int)
+    labels["target_next_day_direction"] = (labels["next_day_return"] > 0).astype(int)
 
     output_columns = [
         "event_ts",
