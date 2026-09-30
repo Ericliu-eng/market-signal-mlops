@@ -1,4 +1,10 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+
 [project]
+
 name = "market-signal-mlops"
 version = "0.1.0"
 description = "Production-style financial MLOps platform for market signal modeling."
